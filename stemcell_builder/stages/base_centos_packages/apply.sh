@@ -5,8 +5,9 @@ set -e
 base_dir=$(readlink -nf $(dirname $0)/../..)
 source $base_dir/lib/prelude_apply.bash
 
-# Upgrade upstart first, to prevent it from messing up our stubs and starting daemons anyway
-pkg_mgr install upstart
+# The CentOS 6.5 script upgraded upstart first, "to prevent it from messing up our stubs and starting daemons anyway"
+# so we'll upgrade systemd for possibly the same reason
+pkg_mgr install systemd
 
 # Install base packages needed by both the warden and bosh
 packages="openssl-devel lsof \
@@ -19,7 +20,7 @@ zip unzip \
 nfs-common flex psmisc apparmor-utils iptables sysstat \
 rsync openssh-server traceroute libncurses5-dev quota \
 libaio1 gdb libcap2-bin libcap-devel bzip2-devel \
-cmake sudo nc libuuid-devel parted"
+cmake sudo nmap-ncat libuuid-devel parted rsyslog"
 pkg_mgr install $packages
 
 # Install runit
@@ -33,4 +34,8 @@ run_in_chroot $chroot "
   cd /tmp/${runit_version}
   ./build.sh
   rpm -i /rpmbuild/RPMS/${runit_version}.rpm
+  groupadd -g 40 dip
 "
+
+# note about dip group: it has been removed in CentOS 7, but the os-independent stuff elsewhere
+# in stemcell builder assumes the group exists. So we create it here.

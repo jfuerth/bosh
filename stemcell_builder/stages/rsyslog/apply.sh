@@ -118,7 +118,16 @@ if [ -f $chroot/etc/debian_version ]; then
   cp $assets_dir/enable-kernel-logging.conf $chroot/etc/rsyslog.d/enable-kernel-logging.conf
 fi
 
-cp $assets_dir/rsyslog_upstart.conf $chroot/etc/init/rsyslog.conf
+if [ -f $chroot/etc/init/rsyslog.conf ]; then
+  rsyslog_conf_file=$chroot/etc/init/rsyslog.conf
+elif [ -f $chroot/etc/rsyslog.conf ]; then
+  rsyslog_conf_file=$chroot/etc/rsyslog.conf
+else
+  echo "Can't find rsyslog.conf in any of the usual places!"
+  exit 1
+fi
+
+cp $assets_dir/rsyslog_upstart.conf $rsyslog_conf_file
 cp $assets_dir/rsyslog_logrotate.conf $chroot/etc/logrotate.d/rsyslog
 
 mkdir -p $chroot/etc/rsyslog.d

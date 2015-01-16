@@ -23,17 +23,27 @@ mkdir -p ${image_mount_point}
 mount ${loopback_dev} ${image_mount_point}
 
 # Install bootloader
-mkdir -p ${image_mount_point}/tmp/grub
+if [ -d ${image_mount_point}/etc/grub.d ] # GRUB 2
+then
+  
+  # install bootsector into disk image file
+  run_in_chroot ${image_mount_point} "grub2-install"
 
-touch ${image_mount_point}/tmp/grub/${stemcell_image_name}
+  # assemble config file that is read by grub2 at boot time
+  run_in_chroot ${image_mount_point} "grub2-mkconfig -o /boot/grub2/grub.cfg"
 
-mount --bind $work/${stemcell_image_name} ${image_mount_point}/tmp/grub/${stemcell_image_name}
+else # Classic GRUB
+  mkdir -p ${image_mount_point}/tmp/grub
 
-cat > ${image_mount_point}/tmp/grub/device.map <<EOS
+  touch ${image_mount_point}/tmp/grub/${stemcell_image_name}
+
+  mount --bind $work/${stemcell_image_name} ${image_mount_point}/tmp/grub/${stemcell_image_name}
+
+  cat > ${image_mount_point}/tmp/grub/device.map <<EOS
 (hd0) ${stemcell_image_name}
 EOS
 
-run_in_chroot ${image_mount_point} "
+  run_in_chroot ${image_mount_point} "
 cd /tmp/grub
 grub --device-map=device.map --batch <<EOF
 root (hd0,0)
@@ -41,31 +51,31 @@ setup (hd0)
 EOF
 "
 
-# Figure out uuid of partition
-uuid=$(blkid -c /dev/null -sUUID -ovalue ${loopback_dev})
+  # Figure out uuid of partition
+  uuid=$(blkid -c /dev/null -sUUID -ovalue ${loopback_dev})
 
-kernel_version=$(basename $(ls ${image_mount_point}/boot/vmlinuz-* |tail -1) |cut -f2-8 -d'-')
+  kernel_version=$(basename $(ls ${image_mount_point}/boot/vmlinuz-* |tail -1) |cut -f2-8 -d'-')
 
-if [ -f ${image_mount_point}/etc/debian_version ] # Ubuntu
-then
-  initrd_file="initrd.img-${kernel_version}"
-  os_name=$(source ${image_mount_point}/etc/lsb-release ; echo -n ${DISTRIB_DESCRIPTION})
-elif [ -f ${image_mount_point}/etc/centos-release ] # Centos
-then
-  initrd_file="initramfs-${kernel_version}.img"
-  os_name=$(cat ${image_mount_point}/etc/centos-release)
-  cat > ${image_mount_point}/etc/fstab <<FSTAB
+  if [ -f ${image_mount_point}/etc/debian_version ] # Ubuntu
+  then
+    initrd_file="initrd.img-${kernel_version}"
+    os_name=$(source ${image_mount_point}/etc/lsb-release ; echo -n ${DISTRIB_DESCRIPTION})
+  elif [ -f ${image_mount_point}/etc/centos-release ] # Centos
+  then
+    initrd_file="initramfs-${kernel_version}.img"
+    os_name=$(cat ${image_mount_point}/etc/centos-release)
+    cat > ${image_mount_point}/etc/fstab <<FSTAB
 # /etc/fstab Created by BOSH Stemcell Builder
 UUID=${uuid} / ext4 defaults 1 1
 FSTAB
-else
-  echo "Unknown OS, exiting"
-  exit 2
-fi
+  else
+    echo "Unknown OS, exiting"
+    exit 2
+  fi
 
-if [ -f ${image_mount_point}/etc/debian_version ] # Ubuntu
-then
-cat > ${image_mount_point}/boot/grub/grub.conf <<GRUB_CONF
+  if [ -f ${image_mount_point}/etc/debian_version ] # Ubuntu
+  then
+  cat > ${image_mount_point}/boot/grub/grub.conf <<GRUB_CONF
 default=0
 timeout=1
 title ${os_name} (${kernel_version})
@@ -73,11 +83,11 @@ title ${os_name} (${kernel_version})
   kernel /boot/vmlinuz-${kernel_version} ro root=UUID=${uuid} selinux=0 cgroup_enable=memory swapaccount=1 console=tty0 console=ttyS0,115200n8
   initrd /boot/${initrd_file}
 GRUB_CONF
-elif [ -f ${image_mount_point}/etc/centos-release ] # Centos
-then
-# We need to set xen_blkfront.sda_is_xvda=1 to force CentOS to
-# have device mapping consistant with Ubuntu.
-cat > ${image_mount_point}/boot/grub/grub.conf <<GRUB_CONF
+  elif [ -f ${image_mount_point}/etc/centos-release ] # Centos
+  then
+  # We need to set xen_blkfront.sda_is_xvda=1 to force CentOS to
+  # have device mapping consistant with Ubuntu.
+  cat > ${image_mount_point}/boot/grub/grub.conf <<GRUB_CONF
 default=0
 timeout=1
 title ${os_name} (${kernel_version})
@@ -85,17 +95,19 @@ title ${os_name} (${kernel_version})
   kernel /boot/vmlinuz-${kernel_version} xen_blkfront.sda_is_xvda=1 ro root=UUID=${uuid} selinux=0 console=tty0 console=ttyS0,115200n8
   initrd /boot/${initrd_file}
 GRUB_CONF
-else
-  echo "Unknown OS, exiting"
-  exit 2
-fi
+  else
+    echo "Unknown OS, exiting"
+    exit 2
+  fi
 
-run_in_chroot ${image_mount_point} "rm -f /boot/grub/menu.lst"
-run_in_chroot ${image_mount_point} "ln -s ./grub.conf /boot/grub/menu.lst"
+  run_in_chroot ${image_mount_point} "rm -f /boot/grub/menu.lst"
+  run_in_chroot ${image_mount_point} "ln -s ./grub.conf /boot/grub/menu.lst"
 
-# Clean up bootloader stuff
-umount ${image_mount_point}/tmp/grub/${stemcell_image_name}
-rm -rf ${image_mount_point}/tmp/grub
+  # Clean up bootloader stuff
+  umount ${image_mount_point}/tmp/grub/${stemcell_image_name}
+  rm -rf ${image_mount_point}/tmp/grub
+
+fi # end of GRUB and GRUB 2 installation process
 
 # Unmount partition
 for try in $(seq 0 9); do
