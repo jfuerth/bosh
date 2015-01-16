@@ -7,7 +7,7 @@ source $base_dir/lib/prelude_apply.bash
 
 mkdir -p $chroot/var/lib/rpm
 rpm --root $chroot --initdb
-rpm --root $chroot --force --nodeps --install http://mirror.centos.org/centos/6/os/x86_64/Packages/centos-release-6-6.el6.centos.12.2.x86_64.rpm
+rpm --root $chroot --force --nodeps --install http://mirror.centos.org/centos/7/os/x86_64/Packages/centos-release-7-0.1406.el7.centos.2.3.x86_64.rpm
 
 cp /etc/resolv.conf $chroot/etc/resolv.conf
 
@@ -22,8 +22,8 @@ unshare -m $SHELL <<INSTALL_YUM
 INSTALL_YUM
 
 run_in_chroot $chroot "
-rpm --force --nodeps --install http://mirror.centos.org/centos/6/os/x86_64/Packages/centos-release-6-6.el6.centos.12.2.x86_64.rpm
-rpm --force --nodeps --install http://ftp.osuosl.org/pub/fedora-epel/6/x86_64/epel-release-6-8.noarch.rpm
+rpm --force --nodeps --install http://mirror.centos.org/centos/7/os/x86_64/Packages/centos-release-7-0.1406.el7.centos.2.3.x86_64.rpm
+rpm --force --nodeps --install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 rpm --rebuilddb
 "
 
