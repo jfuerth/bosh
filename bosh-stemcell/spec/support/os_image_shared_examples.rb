@@ -30,14 +30,14 @@ shared_examples_for 'an OS image' do
     end
   end
 
-  context 'installed by rsyslog' do
+  context 'installed by rsyslog_build' do
    
     # on CentOS 7 and RHEL 7, this file moved to /etc because with systemd, there is no /etc/init dir anymore
   #   chroot_dir = SpecInfra::Backend::Exec.instance.chroot_dir
-  #   syslog_conf_file = "#{chroot_dir}/etc/init/rsyslog.conf"
+  #   syslog_conf_file = "#{chroot_dir}/etc/init/rsyslog_build.conf"
   #   print "looking for syslog_conf_file at #{syslog_conf_file}\n"
   #   if ! File.exists?(syslog_conf_file) then
-  #     syslog_conf_file = "#{chroot_dir}/etc/rsyslog.conf"
+  #     syslog_conf_file = "#{chroot_dir}/etc/rsyslog_build.conf"
   #   end
   #
   #   print "found syslog_conf_file => #{syslog_conf_file}\n"
@@ -46,7 +46,7 @@ shared_examples_for 'an OS image' do
   #     it { should contain('/usr/local/sbin/rsyslogd') }
   #   end
   #
-  #   describe file('/etc/rsyslog.conf') do
+  #   describe file('/etc/rsyslog_build.conf') do
   #     it { should be_file }
   #   end
   #
@@ -62,13 +62,13 @@ shared_examples_for 'an OS image' do
   #     it { should return_stdout /7\.4\.6/ }
   #   end
   #
-  #   # Make sure that rsyslog starts with the machine
-  #   describe file('/etc/init.d/rsyslog') do
+  #   # Make sure that rsyslog_build starts with the machine
+  #   describe file('/etc/init.d/rsyslog_build') do
   #     it { should be_file }
   #     it { should be_executable }
   #   end
   #
-  #   describe service('rsyslog') do
+  #   describe service('rsyslog_build') do
   #     it { should be_enabled.with_level(2) }
   #     it { should be_enabled.with_level(3) }
   #     it { should be_enabled.with_level(4) }
