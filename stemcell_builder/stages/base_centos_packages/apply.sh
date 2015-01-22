@@ -20,7 +20,7 @@ zip unzip \
 nfs-common flex psmisc apparmor-utils iptables sysstat \
 rsync openssh-server traceroute libncurses5-dev quota \
 libaio1 gdb libcap2-bin libcap-devel bzip2-devel \
-cmake sudo nmap-ncat libuuid-devel parted rsyslog"
+cmake sudo nmap-ncat libuuid-devel parted rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
 pkg_mgr install $packages
 
 # Install runit

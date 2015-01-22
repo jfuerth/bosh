@@ -106,9 +106,9 @@ describe 'CentOS OS image', os_image: true do
     end
   end
 
-  context 'rsyslog' do
-    describe file('/etc/rsyslog.d/enable-kernel-logging.conf') do
-      # Make sure imklog module is not loaded in rsyslog
+  context 'rsyslog_build' do
+    describe file('/etc/rsyslog_build.d/enable-kernel-logging.conf') do
+      # Make sure imklog module is not loaded in rsyslog_build
       # to avoid CentOS stemcell pegging CPU on AWS
       it { should_not be_file } # (do not add $ in front of ModLoad because it will break the serverspec regex match)
     end
