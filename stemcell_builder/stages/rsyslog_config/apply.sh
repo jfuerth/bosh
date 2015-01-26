@@ -15,7 +15,7 @@ fi
 
 # configure upstart to start rsyslog if its config dir exists
 if [ -d $chroot/etc/init ]; then
-  cp $assets_dir/rsyslog_upstart.conf $rsyslog_conf_file
+  cp $assets_dir/rsyslog_upstart.conf $chroot/etc/init/rsyslog.conf
 fi
 # TODO: add systemd startup support? (but why upstart or systemd at all if we're using runit to start/monitor rsyslog?)
 

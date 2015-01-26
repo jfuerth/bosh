@@ -4,10 +4,30 @@ set -e
 
 base_dir=$(readlink -nf $(dirname $0)/../..)
 source $base_dir/lib/prelude_apply.bash
+source $base_dir/etc/settings.bash
+
+case "${stemcell_operating_system_version}" in
+  "6.5")
+    init_package_name="upstart"
+    version_specific_packages="nc"
+    ;;
+  "7")
+    init_package_name="systemd"
+    version_specific_packages="nmap-ncat rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
+
+    # note about dip group: it has been removed in CentOS 7, but the os-independent stuff elsewhere
+    # in stemcell builder assumes the group exists. So we create it here.
+    run_in_chroot $chroot "groupadd -g 40 dip"
+    ;;
+  *)
+    echo "Unknown centos version: ${stemcell_operating_system_version}"
+    exit 1
+    ;;
+esac
 
 # The CentOS 6.5 script upgraded upstart first, "to prevent it from messing up our stubs and starting daemons anyway"
 # so we'll upgrade systemd for possibly the same reason
-pkg_mgr install systemd
+pkg_mgr install ${init_package_name}
 
 # Install base packages needed by both the warden and bosh
 packages="openssl-devel lsof \
@@ -20,8 +40,8 @@ zip unzip \
 nfs-common flex psmisc apparmor-utils iptables sysstat \
 rsync openssh-server traceroute libncurses5-dev quota \
 libaio1 gdb libcap2-bin libcap-devel bzip2-devel \
-cmake sudo nmap-ncat libuuid-devel parted rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
-pkg_mgr install $packages
+cmake sudo libuuid-devel parted"
+pkg_mgr install ${packages} ${version_specific_packages}
 
 # Install runit
 pkg_mgr install "rpm-build rpmdevtools glibc-static"
@@ -34,8 +54,4 @@ run_in_chroot $chroot "
   cd /tmp/${runit_version}
   ./build.sh
   rpm -i /rpmbuild/RPMS/${runit_version}.rpm
-  groupadd -g 40 dip
 "
-
-# note about dip group: it has been removed in CentOS 7, but the os-independent stuff elsewhere
-# in stemcell builder assumes the group exists. So we create it here.
