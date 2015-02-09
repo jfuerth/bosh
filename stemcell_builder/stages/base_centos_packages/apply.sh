@@ -40,7 +40,7 @@ zip unzip \
 nfs-common flex psmisc apparmor-utils iptables sysstat \
 rsync openssh-server traceroute libncurses5-dev quota \
 libaio1 gdb libcap2-bin libcap-devel bzip2-devel \
-cmake sudo libuuid-devel parted"
+cmake sudo libuuid-devel parted NetworkManager e2fsprogs"
 pkg_mgr install ${packages} ${version_specific_packages}
 
 # Install runit
@@ -55,3 +55,10 @@ run_in_chroot $chroot "
   ./build.sh
   rpm -i /rpmbuild/RPMS/${runit_version}.rpm
 "
+
+# arrange for runit to start when the system boots
+if [ "${init_package_name}" == "systemd" ]; then
+  cp $(dirname $0)/assets/runit.service ${chroot}/usr/lib/systemd/system/
+  run_in_chroot ${chroot} "systemctl enable runit"
+  run_in_chroot ${chroot} "systemctl enable NetworkManager"
+fi
