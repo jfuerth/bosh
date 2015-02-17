@@ -57,7 +57,7 @@ run_in_chroot $chroot "
 "
 
 # uninstall firewall so iptables are clear of any reject rules
-run_in_chroot ${chroot} "yum erase firewalld"
+run_in_chroot ${chroot} "yum erase firewalld --assumeyes"
 
 # arrange for runit to start when the system boots
 if [ "${init_package_name}" == "systemd" ]; then
