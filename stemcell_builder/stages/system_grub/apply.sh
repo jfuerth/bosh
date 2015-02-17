@@ -42,4 +42,5 @@ fi
 
 # When a kernel is installed, update-grub is run per /etc/kernel-img.conf.
 # It complains when /boot/grub/menu.lst doesn't exist, so create it.
+mkdir -p $chroot/boot/grub
 touch $chroot/boot/grub/menu.lst
