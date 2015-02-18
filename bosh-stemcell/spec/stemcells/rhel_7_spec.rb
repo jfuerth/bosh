@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'CentOS 7 stemcell', stemcell_image: true do
+describe 'RHEL 7 stemcell', stemcell_image: true do
   context 'installed by image_install_grub', exclude_on_warden: true do
     describe file('/etc/fstab') do
       it { should be_file }
@@ -26,7 +26,7 @@ describe 'CentOS 7 stemcell', stemcell_image: true do
 
   context 'installed by system_parameters' do
     describe file('/var/vcap/bosh/etc/operating_system') do
-      it { should contain('centos') }
+      it { should contain('rhel') }
     end
   end
 
