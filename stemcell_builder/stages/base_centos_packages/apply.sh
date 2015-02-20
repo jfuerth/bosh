@@ -17,7 +17,9 @@ case "${stemcell_operating_system_version}" in
 
     # note about dip group: it has been removed in CentOS 7, but the os-independent stuff elsewhere
     # in stemcell builder assumes the group exists. So we create it here.
-    run_in_chroot $chroot "groupadd -g 40 dip"
+    if ! grep -q dip $chroot/etc/group; then
+      run_in_chroot $chroot "groupadd -g 40 dip"
+    fi
     ;;
   *)
     echo "Unknown centos version: ${stemcell_operating_system_version}"
