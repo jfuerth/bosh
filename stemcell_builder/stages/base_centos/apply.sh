@@ -69,3 +69,5 @@ case "${stemcell_operating_system_version}" in
     exit 1
     ;;
 esac
+
+echo "LANG=\"en_US.UTF-8\"" >> ${chroot}/${locale_file}
