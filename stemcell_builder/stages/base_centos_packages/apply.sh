@@ -13,7 +13,7 @@ case "${stemcell_operating_system_version}" in
     ;;
   "7")
     init_package_name="systemd"
-    version_specific_packages="nmap-ncat rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
+    version_specific_packages="rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
 
     # note about dip group: it has been removed in CentOS 7, but the os-independent stuff elsewhere
     # in stemcell builder assumes the group exists. So we create it here.

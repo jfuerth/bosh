@@ -54,7 +54,6 @@ describe 'RHEL OS image', os_image: true do
       libxslt
       libxslt-devel
       lsof
-      nmap-ncat
       openssh-server
       openssl-devel
       parted
