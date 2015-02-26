@@ -54,7 +54,6 @@ describe 'CentOS OS image', os_image: true do
       libxslt
       libxslt-devel
       lsof
-      nmap-ncat
       openssh-server
       openssl-devel
       parted
@@ -135,4 +134,5 @@ describe 'CentOS OS image', os_image: true do
       it { should_not be_file } # (do not add $ in front of ModLoad because it will break the serverspec regex match)
     end
   end
+
 end

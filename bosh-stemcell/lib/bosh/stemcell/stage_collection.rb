@@ -96,6 +96,7 @@ module Bosh::Stemcell
       os_stages = [
           :base_centos,
           :base_centos_packages,
+          :netcat_build,
           :base_ssh,
           # Bosh steps
           :bosh_users,
@@ -119,6 +120,7 @@ module Bosh::Stemcell
       [
         :base_rhel,
         :base_centos_packages,
+        :netcat_build,
         :base_ssh,
         # Bosh steps
         :bosh_users,
