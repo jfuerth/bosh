@@ -33,6 +33,16 @@ With existing stemcell building VM run:
     cd bosh-stemcell
     vagrant provision remote
 
+## Configure your local ssh and scp to communicate with the stemcell building VM
+
+Once the stemcell builing machine is up, run:
+
+    vagrant ssh-config remote
+
+Then copy the resulting output into your `~/.ssh/config` file.
+
+Once this has been done, you can ssh into the stemcell building machine with `ssh remote`
+and you can copy files to and from it using `scp localfile remote:/path/to/destination`
 
 ## Build an OS image
 
@@ -47,9 +57,28 @@ If you have changes that will require new OS image you need to build one. A stem
 
 The arguments to `stemcell:build_os_image` are:
 
-1. *`operating_system_name`* identifies which type of OS to fetch. Determines which package repository and packaging tool will be used to download and assemble the files. Must match a value recognized by the  [OperatingSystem](lib/bosh/stemcell/operating_system.rb) module. Currently, only `ubuntu` and `centos` are recognized.
-2. *`operating_system_version`* an identifier that the system may use to decide which release of the OS to download. Acceptable values depend on the operating system. For `ubuntu`, use `trusty`. For `centos`, the value is currently ignored.
+1. *`operating_system_name`* identifies which type of OS to fetch. Determines which package repository and packaging tool will be used to download and assemble the files. Must match a value recognized by the  [OperatingSystem](lib/bosh/stemcell/operating_system.rb) module. Currently, `ubuntu` `centos` and `rhel` are recognized.
+2. *`operating_system_version`* an identifier that the system may use to decide which release of the OS to download. Acceptable values depend on the operating system. For `ubuntu`, use `trusty`. For `centos` and `rhel`, use `7`.
 3. *`os_image_path`* the path to write the finished OS image tarball to. If a file exists at this path already, it will be overwritten without warning.
+
+### Special requirements for building a RHEL OS image
+
+There are a few extra steps you need to do before building a RHEL OS image:
+
+1. On your local machine, get a copy of the file `/etc/pki/product/69.pem` from an existing RHEL 7 system and place it at `../stemcell_builder/stages/base_rhel/assets/69.pem`
+2. Start up or re-provision the stemcell building machine (run `vagrant up` or `vagrant provision` from this directory)
+3. Download the RHEL 7 install DVD image and use `scp` to copy it to the stemcell building machine
+4. On the stemcell building machine, mount the RHEL 7 DVD at `/mnt/rhel`:
+
+    # mount rhel-server-7.0-x86_64-dvd.iso /mnt/rhel
+
+5. On the stemcell building machine, put your Red Hat Account username and password into environment variables:
+    $ export RHN_USERNAME=my-rh-username@company.com
+    $ export RHN_PASSWORD=my-password
+
+6. On the stemcell building machine, run the stemcell building rake task:
+    $ cd /bosh
+    $ bundle exec rake stemcell:build_os_image[rhel,7,/tmp/rhel_7_base_image.tgz]
 
 See below [Building the stemcell with local OS image](#building-the-stemcell-with-local-os-image) on how to build stemcell with the new OS image.
 
