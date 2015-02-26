@@ -43,7 +43,6 @@ describe 'CentOS 7 OS image', os_image: true do
       libxslt-devel
       lsof
       NetworkManager
-      nmap-ncat
       openssh-server
       openssl-devel
       parted
@@ -78,5 +77,9 @@ describe 'CentOS 7 OS image', os_image: true do
     describe package('grub2-tools') do
       it { should be_installed }
     end
+  end
+
+  describe command('nc -h') do
+    its(:stdout) { should include '-z' }
   end
 end

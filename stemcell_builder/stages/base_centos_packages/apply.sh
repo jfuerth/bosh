@@ -13,7 +13,7 @@ case "${stemcell_operating_system_version}" in
     ;;
   "7")
     init_package_name="systemd"
-    version_specific_packages="nmap-ncat rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
+    version_specific_packages="rsyslog rsyslog-relp rsyslog-gnutls rsyslog-mmjsonparse"
     ;;
   *)
     echo "Unknown centos version: ${stemcell_operating_system_version}"

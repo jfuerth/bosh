@@ -51,7 +51,6 @@ describe 'RHEL 7 OS image', os_image: true do
       libxslt-devel
       lsof
       NetworkManager
-      nmap-ncat
       openssh-server
       openssl-devel
       parted
@@ -94,5 +93,9 @@ describe 'RHEL 7 OS image', os_image: true do
       # to avoid CentOS stemcell pegging CPU on AWS
       it { should_not be_file } # (do not add $ in front of ModLoad because it will break the serverspec regex match)
     end
+  end
+
+  describe command('nc -h') do
+    its(:stdout) { should include '-z' }
   end
 end
