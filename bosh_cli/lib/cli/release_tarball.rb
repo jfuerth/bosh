@@ -4,7 +4,7 @@ module Bosh::Cli
     include DependencyHelper
 
     attr_reader :release_name, :jobs, :packages, :version
-    attr_reader :skipped # Mostly for tests
+    attr_reader :skipped, :unpack_dir # Mostly for tests
 
     def initialize(tarball_path)
       @tarball_path = File.expand_path(tarball_path, Dir.pwd)
@@ -20,6 +20,13 @@ module Bosh::Cli
       @unpacked = $?.exitstatus == 0
     end
 
+    # Creates a new tarball from the current contents of @unpack_dir
+    def create_from_unpacked(target_path)
+      raise "Not unpacked yet!" unless @unpacked
+      `tar -C #{@unpack_dir} -pczf '#{File.expand_path(target_path)}' . 2>&1`
+      $?.exitstatus == 0
+    end
+
     def exists?
       File.exists?(@tarball_path) && File.readable?(@tarball_path)
     end
@@ -28,6 +35,12 @@ module Bosh::Cli
       return nil unless valid?
       unpack
       File.read(File.join(@unpack_dir, "release.MF"))
+    end
+
+    def replace_manifest(hash)
+      return nil unless valid?
+      unpack
+      write_yaml(hash, File.join(@unpack_dir, "release.MF"))
     end
 
     def convert_to_old_format

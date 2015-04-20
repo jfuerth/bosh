@@ -1,5 +1,3 @@
-# Copyright (c) 2009-2012 VMware, Inc.
-
 require "spec_helper"
 
 describe Bosh::Cli::ReleaseTarball do
@@ -36,6 +34,43 @@ describe Bosh::Cli::ReleaseTarball do
       manifest_file = File.join(unpack_dir, 'release.MF')
       manifest = YAML.load(File.read(manifest_file))
       expect(manifest['version']).to eq('8.1.3-dev')
+    end
+  end
+
+  describe 'replace_manifest' do
+    it 'overwrites working copy of release.MF' do
+      release_tarball.replace_manifest("foo" => "bar")
+      expect(release_tarball.manifest).to match <<-EOF
+---
+foo: bar
+      EOF
+    end
+  end
+
+  describe 'create_from_extracted_copy' do
+    it 'generates identical tarball when repacking with no changes' do
+      tarball_path = spec_asset('release_no_version.tgz')
+      release_tarball = Bosh::Cli::ReleaseTarball.new(tarball_path)
+      release_tarball.unpack
+      new_tar_path = Tempfile.new('newly-packed.tgz').path
+      release_tarball.create_from_unpacked(new_tar_path)
+
+      expect(new_tar_path).to have_same_tarball_contents tarball_path
+    end
+
+    it 'creates a tarball that reflects changes made in @unpack_dir' do
+      manifest = Psych.load(release_tarball.manifest)
+      manifest["extra_stuff"] = "it's here!"
+      release_tarball.replace_manifest(manifest)
+
+      new_tar_path = Tempfile.new('newly-packed.tgz').path
+      release_tarball.create_from_unpacked(new_tar_path)
+
+      new_tarball = Bosh::Cli::ReleaseTarball.new(new_tar_path)
+      new_tarball.perform_validation
+      actual = new_tarball.manifest
+      expected = new_tarball.manifest
+      expect(actual).to match expected
     end
   end
 end
