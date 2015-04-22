@@ -84,6 +84,8 @@ module Bosh::Dev::Sandbox
             break
           end
         end
+      rescue Interrupt => e
+        # this happens when someone on another thread calls stop()
       rescue StandardError => e
         # this happens when we get EOF on the client or server socket
       end
@@ -111,7 +113,7 @@ module Bosh::Dev::Sandbox
         @accept_thread.join
       end
       @server_sockets.each do |thread, socket|
-        socket.close rescue StandardError
+        thread.raise Interrupt
         thread.join
       end
     end
