@@ -8,7 +8,7 @@ describe 'recovering from postgres connection failures', type: :integration do
     target_and_login
 
     current_sandbox.postgres_proxy.stop
-    current_sandbox.postgres_proxy.start_background
+    current_sandbox.postgres_proxy.start
 
     upload_stemcell
 
@@ -21,7 +21,7 @@ describe 'recovering from postgres connection failures', type: :integration do
     upload_stemcell
 
     current_sandbox.postgres_proxy.stop
-    current_sandbox.postgres_proxy.start_background
+    current_sandbox.postgres_proxy.start
 
     delete_stemcell
 
