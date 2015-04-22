@@ -35,8 +35,9 @@ module Bosh::Cli::Command::Release
         allow(tarball).to receive(:create_from_unpacked)
 
         allow(Bosh::Cli::BlobManager).to receive(:new).and_return(blob_manager)
-        allow(blob_manager).to receive(:blobs_to_upload).and_return(%w(blobs/foo/pending_blob_1.tar.gz src/bar/pending_blob_2.tar.gz))
-        allow(blob_manager).to receive(:upload_blob)
+        allow(blob_manager).to receive(:sync)
+        allow(blob_manager).to receive(:print_status)
+        allow(blob_manager).to receive(:dirty?).and_return(false)
 
         allow(Bosh::Cli::Versions::VersionsIndex).to receive(:new).and_return(version_index)
         allow(version_index).to receive(:storage_dir).and_return(Dir.mktmpdir("foo") )
@@ -127,11 +128,10 @@ module Bosh::Cli::Command::Release
         expect(tarball).to have_received(:create_from_unpacked).with('releases/my-release/my-release-3.tgz')
       end
 
-      it 'uploads blobs to the blobstore' do
-        command.finalize('ignored.tgz')
-        expect(blob_manager).to have_received(:upload_blob).with('blobs/foo/pending_blob_1.tar.gz')
-        expect(blob_manager).to have_received(:upload_blob).with('src/bar/pending_blob_2.tar.gz')
-      end
+      it 'make sure blobs are uploaded to the blobstore' do
+        allow(blob_manager).to receive(:dirty?).and_return(true)
+        expect { command.finalize('ignored.tgz') }.to raise_error(Bosh::Cli::CliError, "Please use '--force' or upload new blobs")
+     end
 
       it 'can do a dry run' do
         command.options[:dry_run] = true
@@ -139,9 +139,11 @@ module Bosh::Cli::Command::Release
         expect(tarball).to_not have_received(:replace_manifest)
         expect(version_index).to_not have_received(:add_version)
         expect(tarball).to_not have_received(:create_from_unpacked)
-        expect(blob_manager).to_not have_received(:upload_blob)
       end
 
+      it 'updates .final_builds with the new package and job versions' do
+
+      end
     end
   end
 end

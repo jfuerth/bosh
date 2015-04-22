@@ -68,9 +68,7 @@ foo: bar
 
       new_tarball = Bosh::Cli::ReleaseTarball.new(new_tar_path)
       new_tarball.perform_validation
-      actual = new_tarball.manifest
-      expected = new_tarball.manifest
-      expect(actual).to match expected
+      expect(new_tarball.manifest).to match release_tarball.manifest
     end
   end
 end

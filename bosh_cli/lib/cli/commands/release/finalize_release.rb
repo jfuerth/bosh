@@ -17,8 +17,6 @@ module Bosh::Cli::Command
 
         tarball.perform_validation
 
-        raise Bosh::Cli::CliError.new("Release tarball already has final version #{tarball.version}") unless tarball.version.include? "dev"
-
         manifest = Psych.load(tarball.manifest)
         # manifest = {
         #     "name" => "appcloud",
@@ -59,15 +57,14 @@ module Bosh::Cli::Command
           raise Bosh::Cli::ReleaseVersionError.new('Release version already exists')
         end
 
+        blob_manager.sync
+        if blob_manager.dirty?
+          blob_manager.print_status
+          err("Please use '--force' or upload new blobs")
+        end
+
         if !options[:dry_run] then
           say("Creating final release #{final_release_name}/#{final_release_ver} from dev release #{dev_release_name}/#{dev_release_ver}")
-          nl
-          say("Checking for blobs that need to be uploaded")
-          blob_manager.print_status
-          blob_manager.blobs_to_upload.each do |blob|
-            say("Uploading #{blob}")
-            blob_manager.upload_blob(blob)
-          end
 
           manifest["version"] = final_release_ver
           manifest["name"] = final_release_name
