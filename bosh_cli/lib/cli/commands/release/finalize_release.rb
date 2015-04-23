@@ -18,28 +18,32 @@ module Bosh::Cli::Command
         tarball.perform_validation
 
         manifest = Psych.load(tarball.manifest)
-        # manifest = {
-        #     "name" => "appcloud",
-        #     "version" => "8.1+dev.3",
-        #     "packages" => [
-        #         {"name" => "stuff", "version" => "0.1.17",
-        #          "sha1" => "6bbd4a12e3a59e10b96ecb9aac3d73ec4f819783"},
-        #         {"name" => "mutator", "version" => "2.99.7",
-        #          "sha1" => "86bd8b15562cde007f030a303fa64779af5fa4e7"}
-        #     ],
-        #     "jobs" => [
-        #         {"name" => "cacher",
-        #          "version" => 1,
-        #          "sha1" => "be1d5996db911110b6c8935500804456134a60af"},
-        #         {"name" => "cleaner",
-        #          "version" => 2,
-        #          "sha1" => "db0148e48e96ed11065432df22909c8c9bb80bc5"},
-        #         {"name" => "sweeper",
-        #          "version" => 24,
-        #          "sha1" => "2f5ee446056c8b835b16c6917bee2ac234d679ce"}
-        #     ]
-        # }
-
+        # packages:
+        # - name: go-lang-1.3
+        #   version: 6279e334a5735c628b1e09b0b376ffd62a381e97
+        #   fingerprint: 6279e334a5735c628b1e09b0b376ffd62a381e97
+        #   sha1: ac93ae96ede786dc383deebc6d1261da0e5c3a61
+        #   dependencies: []
+        # - name: go-lang-1.4.2
+        #   version: b69852dec2121ca951d83deef79d3160ca6d270c
+        #   fingerprint: b69852dec2121ca951d83deef79d3160ca6d270c
+        #   sha1: b02355dfffd132ed7f28b7de3495e36857ebb215
+        #   dependencies: []
+        # - name: hello-go
+        #   version: ad9a6cec10b1d975f523d16d0ed49e812036ed23
+        #   fingerprint: ad9a6cec10b1d975f523d16d0ed49e812036ed23
+        #   sha1: 65565f741c41c676ac6a60ab8697c38ddaabdfc0
+        #   dependencies:
+        #     - go-lang-1.4.2
+        #   jobs:
+        #     - name: hello-go
+        #   version: 02a50fae60301efcadfec0f9f9b21801af7b2421
+        #   fingerprint: 02a50fae60301efcadfec0f9f9b21801af7b2421
+        #   sha1: 05d6d5dfd861cbdb1b48aaea094bd433b418ce7c
+        # commit_hash: '00000000'
+        # uncommitted_changes: false
+        # name: hello-go
+        # version: '2'
         dev_release_name = manifest["name"]
         dev_release_ver = manifest["version"]
 
@@ -79,9 +83,43 @@ module Bosh::Cli::Command
 
           tarball.create_from_unpacked("releases/#{final_release_name}/#{final_release_name}-#{final_release_ver}.tgz")
 
+          # upload all packages & jobs to the blobstore
+          manifest['packages'].each do |package|
+            upload_to_blobstore(package, 'packages', tarball.package_tarball_path(package['name']))
+          end
+
+          manifest['jobs'].each do |job|
+            upload_to_blobstore(job, 'jobs', tarball.job_tarball_path(job['name']))
+          end
+
+          # update each package in .final_builds/packages with blobstore_id
+          # update license info in .final_builds/license
+
           release.latest_release_filename = "releases/#{final_release_name}/#{final_release_name}-#{final_release_ver}.yml"
           release.save_config
         end
+      end
+
+      def upload_to_blobstore(artifact, plural_type, artifact_path)
+
+        err("Cannot find artifact complete information, please upgrade tarball to newer version") if !artifact['fingerprint']
+
+        final_builds_dir = File.join('.final_builds', plural_type, artifact['name']).to_s
+        FileUtils.mkdir_p(final_builds_dir)
+        final_builds_index = Bosh::Cli::Versions::VersionsIndex.new(final_builds_dir)
+
+        return artifact if final_builds_index[artifact['fingerprint']]
+
+        blobstore_id = nil
+        File.open(artifact_path, 'r') do |f|
+          blobstore_id = @release.blobstore.create(f)
+        end
+
+        final_builds_index.add_version(artifact['fingerprint'], {
+            'version' => artifact['version'],
+            'sha1' => artifact['sha1'],
+            'blobstore_id' => blobstore_id
+          })
       end
     end
   end

@@ -11,21 +11,19 @@ describe 'finalize release', type: :integration do
   describe 'release finalization' do
     it 'can finalize an existing release' do
       Dir.chdir(ClientSandbox.test_release_dir) do
-        out = bosh_runner.run_in_current_dir("finalize release #{spec_asset('valid_release.tgz')}")
-        expect(out).to match('Creating final release appcloud/1 from dev release appcloud/0.1')
+        out = bosh_runner.run_in_current_dir("finalize release #{spec_asset('dummy-release.tgz')}")
+        expect(out).to match('Creating final release dummy/1 from dev release dummy/0.2-dev')
       end
     end
 
     it 'updates the .final_builds index for each job, package and license' do
       Dir.chdir(ClientSandbox.test_release_dir) do
-        bosh_runner.run_in_current_dir("finalize release #{spec_asset('valid_release.tgz')}")
-        job_index = Psych.load_file(File.absolute_path('.final_builds/jobs/cacher/index.yml'))
+        bosh_runner.run_in_current_dir("finalize release #{spec_asset('dummy-release.tgz')}")
+        job_index = Psych.load_file(File.absolute_path('.final_builds/jobs/dummy/index.yml'))
         puts "JOB INDEX:", job_index
         expect(job_index).to include('builds')
-        expect(job_index['builds']).to include('852df6d487c831635c4b42637e770d81230a8b76')
-        expect(job_index['builds']['852df6d487c831635c4b42637e770d81230a8b76']).to_be hash_incuding(
-                                                                                          'version', 'blobstore_id', 'sha1'
-                                                                                      )
+        expect(job_index['builds']).to include('a2f501d07c3e96689185ee6ebe26c15d54d4849a')
+        expect(job_index['builds']['a2f501d07c3e96689185ee6ebe26c15d54d4849a']).to include('version', 'blobstore_id', 'sha1')
       end
     end
 

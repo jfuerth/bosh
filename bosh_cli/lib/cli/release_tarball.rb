@@ -43,6 +43,18 @@ module Bosh::Cli
       write_yaml(hash, File.join(@unpack_dir, "release.MF"))
     end
 
+    def job_tarball_path(name)
+      return nil unless valid?
+      unpack
+      File.join(@unpack_dir, 'jobs', "#{name}.tgz")
+    end
+
+    def package_tarball_path(name)
+      return nil unless valid?
+      unpack
+      File.join(@unpack_dir, 'packages', "#{name}.tgz")
+    end
+
     def convert_to_old_format
       step('Converting to old format',
            "Cannot extract tarball #{@tarball_path}", :fatal) do
