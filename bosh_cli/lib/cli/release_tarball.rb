@@ -55,6 +55,17 @@ module Bosh::Cli
       File.join(@unpack_dir, 'packages', "#{name}.tgz")
     end
 
+    def license_tarball_path
+      return nil unless valid?
+      unpack
+      l = Resources::License.new(@unpack_dir)
+      if l.files
+        l.files[0][0]
+      else
+        nil
+      end
+    end
+
     def convert_to_old_format
       step('Converting to old format',
            "Cannot extract tarball #{@tarball_path}", :fatal) do
@@ -278,6 +289,43 @@ module Bosh::Cli
       end
 
       print_info(manifest)
+    end
+
+    class TarballArtifact
+      def initialize(info)
+        @name = info['name']
+        @version = info['version']
+      end
+
+      attr_reader :name, :version
+
+      def new_version?
+        false
+      end
+    end
+
+    def license
+      m = Psych.load(manifest)
+      license = m['license']
+      return nil if !license
+      license['name'] = 'license'
+      TarballArtifact.new(license)
+    end
+
+    def packages
+      m = Psych.load(manifest)
+      packages = m['packages'] || []
+      packages.map { |pkg| TarballArtifact.new(pkg) }
+    end
+
+    def jobs
+      m = Psych.load(manifest)
+      jobs = m['jobs'] || []
+      jobs.map { |job| TarballArtifact.new(job) }
+    end
+
+    def affected_jobs
+      []
     end
 
     def print_info(manifest)

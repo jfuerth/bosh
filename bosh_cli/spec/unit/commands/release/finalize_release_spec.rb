@@ -3,31 +3,41 @@ require 'spec_helper'
 module Bosh::Cli::Command::Release
 
   ORIG_DEV_VERSION = "8.1+dev.3"
+  FAKE_MANIFEST = <<-MANIFEST
+          { 'name': 'my-release',
+            'version': '#{ORIG_DEV_VERSION}',
+            'packages': [],
+            'jobs': []
+          }
+  MANIFEST
 
   describe FinalizeRelease do
     subject(:command) { FinalizeRelease.new }
 
     describe '#finalize' do
-
       let(:release) { instance_double('Bosh::Cli::Release') }
       let(:file) {instance_double(File)}
       let(:tarball) { instance_double('Bosh::Cli::ReleaseTarball') }
       let(:blob_manager) { instance_double('Bosh::Cli::BlobManager') }
+      let(:blobstore) { instance_double('Bosh::Blobstore::Client') }
       let(:version_index) { instance_double('Bosh::Cli::Versions::VersionsIndex') }
       let(:release_version_index) { instance_double('Bosh::Cli::Versions::ReleaseVersionsIndex') }
       before do
 
         allow(command).to receive(:check_if_release_dir)
+        allow(command).to receive(:show_summary)
         allow(command).to receive(:release).and_return(release)
 
         allow(release).to receive(:save_config)
         allow(release).to receive(:latest_release_filename=)
+        allow(release).to receive(:latest_release_filename).and_return('foo-1.yml')
+        allow(release).to receive(:blobstore).and_return(blobstore)
 
         allow(File).to receive(:open).and_return(file)
         allow(file).to receive(:puts)
 
         allow(Bosh::Cli::ReleaseTarball).to receive(:new).and_return(tarball)
-        allow(tarball).to receive(:manifest).and_return("{'name': 'my-release', 'version': '#{ORIG_DEV_VERSION}'}")
+        allow(tarball).to receive(:manifest).and_return(FAKE_MANIFEST)
         allow(tarball).to receive(:exists?).and_return(true)
         allow(tarball).to receive(:perform_validation)
         allow(tarball).to receive(:version).and_return(ORIG_DEV_VERSION)
@@ -41,7 +51,7 @@ module Bosh::Cli::Command::Release
 
         allow(Bosh::Cli::Versions::VersionsIndex).to receive(:new).and_return(version_index)
         allow(version_index).to receive(:storage_dir).and_return(Dir.mktmpdir("foo") )
-        allow(version_index).to receive(:version_strings)
+        allow(version_index).to receive(:version_strings).and_return([])
         allow(version_index).to receive(:add_version)
 
         allow(Bosh::Cli::Versions::ReleaseVersionsIndex).to receive(:new).and_return(release_version_index)
@@ -61,11 +71,6 @@ module Bosh::Cli::Command::Release
       it 'fails when nonexistent tarball is specified' do
         allow(tarball).to receive(:exists?).and_return(false)
         expect { command.finalize('nonexistent.tgz') }.to raise_error(Bosh::Cli::CliError, 'Cannot find release tarball nonexistent.tgz')
-      end
-
-      it 'fails when given a final release tarball as input' do
-        allow(tarball).to receive(:version).and_return("2")
-        expect { command.finalize('ignored.tgz') }.to raise_error(Bosh::Cli::CliError, 'Release tarball already has final version 2')
       end
 
       it 'uses given name if --name is specified' do
@@ -92,9 +97,9 @@ module Bosh::Cli::Command::Release
 
       it 'if --version is specified and is already taken, show an already exists version error' do
         command.options[:version] = "3"
-        local_artifact_storage = instance_double(Bosh::Cli::Versions::LocalArtifactStorage)
-        allow(Bosh::Cli::Versions::LocalArtifactStorage).to receive(:new).and_return(local_artifact_storage)
-        allow(local_artifact_storage).to receive(:has_file?).and_return(true)
+        # release_index = instance_double(Bosh::Cli::Versions::VersionsIndex)
+        # allow(Bosh::Cli::Versions::VersionsIndex).to receive(:new).and_return(release_index)
+        allow(version_index).to receive(:version_strings).and_return(%w(1 2 3 4 5))
         expect { command.finalize('ignored.tgz') }.to raise_error(Bosh::Cli::CliError, 'Release version already exists')
       end
 
@@ -108,13 +113,13 @@ module Bosh::Cli::Command::Release
 
       it 'updates the latest release filename to point to the finalized release' do
         command.finalize('ignored.tgz')
-        expect(release).to have_received(:latest_release_filename=).with('releases/my-release/my-release-3.yml')
+        expect(release).to have_received(:latest_release_filename=).with(File.absolute_path('releases/my-release/my-release-3.yml'))
         expect(release).to have_received(:save_config)
       end
 
       it 'saves the final release manifest into the release directory' do
         command.finalize('ignored.tgz')
-        expect(file).to have_received(:puts).with("{'name': 'my-release', 'version': '8.1+dev.3'}")
+        expect(file).to have_received(:puts).with(FAKE_MANIFEST)
       end
 
       it 'updates release index file' do
@@ -125,7 +130,7 @@ module Bosh::Cli::Command::Release
 
       it 'creates the final release tarball' do
         command.finalize('ignored.tgz')
-        expect(tarball).to have_received(:create_from_unpacked).with('releases/my-release/my-release-3.tgz')
+        expect(tarball).to have_received(:create_from_unpacked).with(File.absolute_path('releases/my-release/my-release-3.tgz'))
       end
 
       it 'make sure blobs are uploaded to the blobstore' do
