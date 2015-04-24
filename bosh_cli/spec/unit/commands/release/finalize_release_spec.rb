@@ -50,7 +50,6 @@ module Bosh::Cli::Command::Release
         allow(blob_manager).to receive(:dirty?).and_return(false)
 
         allow(Bosh::Cli::Versions::VersionsIndex).to receive(:new).and_return(version_index)
-        allow(version_index).to receive(:storage_dir).and_return(Dir.mktmpdir("foo") )
         allow(version_index).to receive(:version_strings).and_return([])
         allow(version_index).to receive(:add_version)
 
@@ -118,8 +117,10 @@ module Bosh::Cli::Command::Release
       end
 
       it 'saves the final release manifest into the release directory' do
+        file = instance_double(File)
+        expect(File).to receive(:open).with(File.absolute_path('releases/my-release/my-release-3.yml'), 'w').and_yield(file)
+        expect(file).to receive(:puts).with(FAKE_MANIFEST)
         command.finalize('ignored.tgz')
-        expect(file).to have_received(:puts).with(FAKE_MANIFEST)
       end
 
       it 'updates release index file' do
@@ -144,10 +145,6 @@ module Bosh::Cli::Command::Release
         expect(tarball).to_not have_received(:replace_manifest)
         expect(version_index).to_not have_received(:add_version)
         expect(tarball).to_not have_received(:create_from_unpacked)
-      end
-
-      it 'updates .final_builds with the new package and job versions' do
-
       end
     end
   end
