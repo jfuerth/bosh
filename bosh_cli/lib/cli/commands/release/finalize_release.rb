@@ -16,9 +16,9 @@ module Bosh::Cli::Command
         options[:final] = true
         check_if_release_dir
         tarball = Bosh::Cli::ReleaseTarball.new(tarball_path)
-        raise Bosh::Cli::CliError.new("Cannot find release tarball #{tarball_path}") if !tarball.exists?
+        err("Cannot find release tarball #{tarball_path}") if !tarball.exists?
 
-        tarball.perform_validation
+        err("#{tarball_path} is not a valid release tarball") if !tarball.valid?(:print_release_info => false)
 
         manifest = Psych.load(tarball.manifest)
 

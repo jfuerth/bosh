@@ -131,10 +131,8 @@ module Bosh::Cli
     # and packages in place when we do validation. However for jobs and packages
     # that are present we still need to validate checksums
     def perform_validation(options = {})
-      # CLEANUP this syntax
-      allow_sparse = options.has_key?(:allow_sparse) ?
-          !!options[:allow_sparse] :
-          false
+      allow_sparse = options.fetch(:allow_sparse, false)
+      should_print_release_info = options.fetch(:print_release_info, true)
 
       step("File exists and readable",
            "Cannot find release file #{@tarball_path}", :fatal) do
@@ -288,7 +286,7 @@ module Bosh::Cli
         end
       end
 
-      print_info(manifest)
+      print_info(manifest) if should_print_release_info
     end
 
     class TarballArtifact

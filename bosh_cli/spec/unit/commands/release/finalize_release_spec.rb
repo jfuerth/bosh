@@ -39,7 +39,7 @@ module Bosh::Cli::Command::Release
         allow(Bosh::Cli::ReleaseTarball).to receive(:new).and_return(tarball)
         allow(tarball).to receive(:manifest).and_return(FAKE_MANIFEST)
         allow(tarball).to receive(:exists?).and_return(true)
-        allow(tarball).to receive(:perform_validation)
+        allow(tarball).to receive(:valid?).and_return(true)
         allow(tarball).to receive(:version).and_return(ORIG_DEV_VERSION)
         allow(tarball).to receive(:replace_manifest)
         allow(tarball).to receive(:create_from_unpacked)
