@@ -142,7 +142,7 @@ describe 'finalize release', type: :integration do
           end
           bosh_runner.run_in_current_dir("create release --force --with-tarball --name=test-release")
           out = bosh_runner.run_in_current_dir("finalize release dev_releases/test-release/test-release-0+dev.1.tgz")
-          expect(out).to match(/- license \(7a59f7973cddfa0301ca34a29d4cc876247dd7de\)/)
+          expect(out).to match(/\| license \| 7a59f7973cddfa0301ca34a29d4cc876247dd7de \|/)
           expect(out).to match(/Creating final release test-release\/1 from dev release test-release\/0\+dev\.1/)
         end
       end
@@ -155,7 +155,7 @@ describe 'finalize release', type: :integration do
           end
           bosh_runner.run_in_current_dir("create release --force --with-tarball --name=test-release")
           out = bosh_runner.run_in_current_dir("finalize release dev_releases/test-release/test-release-0+dev.1.tgz")
-          expect(out).to match(/- license \(af23c9afabd1eae2ff49db2545937b0467c61dd3\)/)
+          expect(out).to match(/\| license \| af23c9afabd1eae2ff49db2545937b0467c61dd3 \|/)
           expect(out).to match(/Creating final release test-release\/1 from dev release test-release\/0\+dev\.1/)
         end
       end
@@ -166,7 +166,7 @@ describe 'finalize release', type: :integration do
           expect(File).to_not exist('NOTICE')
           bosh_runner.run_in_current_dir("create release --force --with-tarball --name=test-release")
           out = bosh_runner.run_in_current_dir("finalize release dev_releases/test-release/test-release-0+dev.1.tgz")
-          expect(out).to_not match(/- license/)
+          expect(out).to_not match(/\| license \|/)
           expect(out).to match(/Creating final release test-release\/1 from dev release test-release\/0\+dev\.1/)
         end
       end

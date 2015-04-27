@@ -24,12 +24,11 @@ module Bosh::Cli::Command
 
         dev_release_name = manifest["name"]
         dev_release_ver = manifest["version"]
-
         final_release_name = options[:name] || dev_release_name
-        final_release_ver = options[:version] || next_final_version
 
         final_release_dir = File.join('releases', final_release_name)
         @release_index = Bosh::Cli::Versions::VersionsIndex.new(final_release_dir)
+        final_release_ver = options[:version] || next_final_version
 
         if options[:version] && @release_index.version_strings.include?(options[:version])
           raise Bosh::Cli::ReleaseVersionError.new('Release version already exists')
